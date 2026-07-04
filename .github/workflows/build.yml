@@ -24,41 +24,12 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - target: windows
-            os: windows-latest
+          - target: windows-arm64
+            os: windows-11-arm
             project: src/Pixeval.Desktop/Pixeval.Desktop.csproj
-            runtime: win-x64
+            runtime: win-arm64
             command: publish
-            output: artifacts/windows
-          - target: android
-            os: windows-latest
-            project: src/Pixeval.Android/Pixeval.Android.csproj
-            runtime: android-arm64
-            command: publish
-            output: artifacts/android
-          - target: macos
-            os: macos-latest
-            project: src/Pixeval.Desktop/Pixeval.Desktop.csproj
-            runtime: osx-arm64
-            command: publish
-            output: artifacts/macos
-          - target: linux
-            os: ubuntu-latest
-            project: src/Pixeval.Desktop/Pixeval.Desktop.csproj
-            runtime: linux-x64
-            command: publish
-            output: artifacts/linux
-          - target: browser
-            os: ubuntu-latest
-            project: src/Pixeval.Browser/Pixeval.Browser.csproj
-            runtime: browser-wasm
-            command: publish
-            output: artifacts/browser
-
-        # GitHub-hosted macOS runners currently expose Xcode 16.4, while
-        # net10.0-ios from SDK 10.0.300 requires Xcode 26.5. Keep the iOS build
-        # out of the default matrix until the runner image catches up or a
-        # compatible self-hosted runner is introduced.
+            output: artifacts/windows-arm64
 
     env:
       CONFIGURATION: Release
@@ -106,15 +77,6 @@ jobs:
             --no-restore `
             -o ${{ matrix.output }}
 
-      - name: Package AppImage
-        if: ${{ matrix.target == 'linux' }}
-        shell: bash
-        run: |
-          bash scripts/package-appimage.sh \
-            "${{ matrix.output }}" \
-            artifacts/linux-appimage \
-            "${{ steps.package-version.outputs.version }}"
-
       - name: Upload artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
@@ -124,11 +86,3 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Upload AppImage artifact
-        if: ${{ always() && matrix.target == 'linux' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: Pixeval-linux-appimage
-          path: artifacts/linux-appimage/*.AppImage
-          if-no-files-found: error
-          retention-days: 14
